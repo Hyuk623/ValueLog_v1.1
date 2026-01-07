@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { AppTab, Child, ExperienceEntry, STARR, Language } from './types';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { AppTab, Child, ExperienceEntry, STARR, Language, User } from './types';
 import { storage } from './services/storage';
 import { ACTIVITY_TAGS, COMPETENCY_TAGS } from './constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Plus, Wand2, Star, Save, Loader2, UserPlus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Wand2, Star, Save, Loader2, UserPlus, Trash2, Camera, X, LogIn, Sparkles } from 'lucide-react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ExperienceCard from './components/ExperienceCard';
@@ -12,12 +12,16 @@ import { refineToSTARR, suggestTags } from './services/gemini';
 import { translations } from './i18n';
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.TIMELINE);
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [entries, setEntries] = useState<ExperienceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lang, setLang] = useState<Language>('en');
+
+  // Login State
+  const [loginInput, setLoginInput] = useState('');
 
   // Custom Tags State
   const [customActivityTags, setCustomActivityTags] = useState<string[]>([]);
@@ -29,6 +33,7 @@ const App: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0]);
   const [formRawNotes, setFormRawNotes] = useState('');
+  const [formImage, setFormImage] = useState<string | undefined>(undefined);
   const [formSTARR, setFormSTARR] = useState<STARR>({
     situation: '', task: '', action: '', result: '', reflection: ''
   });
@@ -36,22 +41,32 @@ const App: React.FC = () => {
   const [formCompetencyTags, setFormCompetencyTags] = useState<string[]>([]);
   const [formSatisfaction, setFormSatisfaction] = useState(5);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const t = translations[lang];
 
   useEffect(() => {
-    const loadedChildren = storage.getChildren();
-    const loadedEntries = storage.getEntries();
+    const savedUser = storage.getUser();
     const savedLang = storage.getLanguage();
-    const loadedCustomAct = storage.getCustomActivityTags();
-    const loadedCustomComp = storage.getCustomCompetencyTags();
+    setLang(savedLang);
+
+    if (savedUser) {
+      setCurrentUser(savedUser);
+      loadUserData(savedUser.id);
+    }
+  }, []);
+
+  const loadUserData = (userId: string) => {
+    const loadedChildren = storage.getChildren(userId);
+    const loadedEntries = storage.getEntries(userId);
+    const loadedCustomAct = storage.getCustomActivityTags(userId);
+    const loadedCustomComp = storage.getCustomCompetencyTags(userId);
 
     setChildren(loadedChildren);
     setEntries(loadedEntries);
-    setLang(savedLang);
     setCustomActivityTags(loadedCustomAct);
     setCustomCompetencyTags(loadedCustomComp);
 
-    const lastChildId = storage.getSelectedChildId();
+    const lastChildId = storage.getSelectedChildId(userId);
     if (lastChildId) {
       const found = loadedChildren.find(c => c.id === lastChildId);
       if (found) setSelectedChild(found);
@@ -59,11 +74,27 @@ const App: React.FC = () => {
     } else if (loadedChildren.length > 0) {
       setSelectedChild(loadedChildren[0]);
     }
-  }, []);
+  };
+
+  const handleLogin = () => {
+    if (!loginInput.trim()) return;
+    const user: User = { id: loginInput.trim().toLowerCase(), name: loginInput.trim() };
+    setCurrentUser(user);
+    storage.setUser(user);
+    loadUserData(user.id);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    storage.setUser(null);
+    setChildren([]);
+    setEntries([]);
+  };
 
   const handleSelectChild = (child: Child) => {
+    if (!currentUser) return;
     setSelectedChild(child);
-    storage.setSelectedChildId(child.id);
+    storage.setSelectedChildId(currentUser.id, child.id);
   };
 
   const handleLangChange = (newLang: Language) => {
@@ -121,27 +152,41 @@ const App: React.FC = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveEntry = () => {
-    if (!selectedChild || !formTitle) return;
+    if (!currentUser || !selectedChild || !formTitle) return;
 
     const newEntry: ExperienceEntry = {
       id: crypto.randomUUID(),
       childId: selectedChild.id,
+      userId: currentUser.id,
       title: formTitle,
       date: formDate,
       starr: formSTARR,
       activityTags: formActivityTags,
       competencyTags: formCompetencyTags,
-      satisfaction: formSatisfaction
+      satisfaction: formSatisfaction,
+      image: formImage
     };
 
     const updated = [...entries, newEntry];
     setEntries(updated);
-    storage.saveEntries(updated);
+    storage.saveEntries(currentUser.id, updated);
     
     // Reset Form
     setFormTitle('');
     setFormRawNotes('');
+    setFormImage(undefined);
     setFormSTARR({ situation: '', task: '', action: '', result: '', reflection: '' });
     setFormActivityTags([]);
     setFormCompetencyTags([]);
@@ -149,6 +194,7 @@ const App: React.FC = () => {
   };
 
   const handleAddChild = () => {
+    if (!currentUser) return;
     const name = prompt(t.child_name_prompt);
     if (!name) return;
     const newChild: Child = {
@@ -158,36 +204,39 @@ const App: React.FC = () => {
     };
     const updated = [...children, newChild];
     setChildren(updated);
-    storage.saveChildren(updated);
+    storage.saveChildren(currentUser.id, updated);
     setSelectedChild(newChild);
-    storage.setSelectedChildId(newChild.id);
+    storage.setSelectedChildId(currentUser.id, newChild.id);
   };
 
   const handleDeleteEntry = (id: string) => {
+    if (!currentUser) return;
     if (confirm(t.delete_confirm)) {
       const updated = entries.filter(e => e.id !== id);
       setEntries(updated);
-      storage.saveEntries(updated);
+      storage.saveEntries(currentUser.id, updated);
     }
   };
 
   const addCustomActivityTag = () => {
+    if (!currentUser) return;
     const trimmed = newActivityInput.trim();
     if (trimmed && !allActivityTags.includes(trimmed)) {
       const updated = [...customActivityTags, trimmed];
       setCustomActivityTags(updated);
-      storage.saveCustomActivityTags(updated);
+      storage.saveCustomActivityTags(currentUser.id, updated);
       setFormActivityTags(prev => [...prev, trimmed]);
       setNewActivityInput('');
     }
   };
 
   const addCustomCompTag = () => {
+    if (!currentUser) return;
     const trimmed = newCompInput.trim();
     if (trimmed && !allCompetencyTags.includes(trimmed)) {
       const updated = [...customCompetencyTags, trimmed];
       setCustomCompetencyTags(updated);
-      storage.saveCustomCompetencyTags(updated);
+      storage.saveCustomCompetencyTags(currentUser.id, updated);
       setFormCompetencyTags(prev => [...prev, trimmed]);
       setNewCompInput('');
     }
@@ -195,6 +244,43 @@ const App: React.FC = () => {
 
   const getTagLabel = (key: string) => (t.tags as any)[key] || key;
 
+  // Render Login View
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-200 border border-slate-100 p-8 space-y-8 animate-in fade-in zoom-in-95 duration-500">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200 mb-2">
+              <Sparkles size={32} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t.login_title}</h1>
+            <p className="text-slate-500">{t.login_subtitle}</p>
+          </div>
+
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={loginInput}
+              onChange={(e) => setLoginInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              placeholder={t.login_placeholder}
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-center text-lg font-medium"
+            />
+            <button
+              onClick={handleLogin}
+              disabled={!loginInput.trim()}
+              className="w-full flex items-center justify-center space-x-2 py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl hover:bg-black transition-all disabled:opacity-50"
+            >
+              <LogIn size={20} />
+              <span>{t.login_button}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Main App View
   return (
     <div className="min-h-screen pb-24 bg-slate-50">
       <Header
@@ -203,6 +289,8 @@ const App: React.FC = () => {
         onSelectChild={handleSelectChild}
         currentLang={lang}
         onLangChange={handleLangChange}
+        user={currentUser}
+        onLogout={handleLogout}
       />
 
       <main className="max-w-4xl mx-auto px-4 py-6">
@@ -282,9 +370,9 @@ const App: React.FC = () => {
                 <ExperienceCard entry={entry} lang={lang} />
                 <button
                   onClick={() => handleDeleteEntry(entry.id)}
-                  className="absolute -top-2 -right-2 p-1 bg-white border border-slate-200 rounded-full text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 p-1.5 bg-white border border-slate-200 rounded-full text-red-500 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}
@@ -302,6 +390,45 @@ const App: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-800 mb-6">{t.new_log}</h2>
               
               <div className="space-y-4">
+                {/* Photo Upload Section */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{t.add_photo}</label>
+                  <div className="relative group">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleImageChange} 
+                      accept="image/*" 
+                      className="hidden" 
+                    />
+                    {formImage ? (
+                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-blue-100 group">
+                        <img src={formImage} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => setFormImage(undefined)}
+                          className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                        <div 
+                          className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <span className="text-white text-sm font-bold bg-black/40 px-4 py-2 rounded-full">{t.change_photo}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full aspect-video border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 hover:border-blue-300 transition-all space-y-2"
+                      >
+                        <Camera size={32} strokeWidth={1.5} />
+                        <span className="text-sm font-medium">{t.add_photo}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t.activity_title}</label>
                   <input
@@ -397,7 +524,6 @@ const App: React.FC = () => {
                           {getTagLabel(tag)}
                         </button>
                       ))}
-                      {/* Add Custom Activity Tag Input */}
                       <div className="flex items-center bg-slate-50 border border-dashed border-slate-300 rounded-full px-2 py-0.5">
                         <input
                           type="text"
@@ -430,7 +556,6 @@ const App: React.FC = () => {
                           {getTagLabel(tag)}
                         </button>
                       ))}
-                      {/* Add Custom Competency Tag Input */}
                       <div className="flex items-center bg-slate-50 border border-dashed border-slate-300 rounded-full px-2 py-0.5">
                         <input
                           type="text"
@@ -478,7 +603,7 @@ const App: React.FC = () => {
               {children.map(child => (
                 <div 
                   key={child.id}
-                  className={`bg-white p-5 rounded-2xl shadow-sm border flex items-center space-x-4 transition-all ${
+                  className={`bg-white p-5 rounded-2xl shadow-sm border flex items-center space-x-4 transition-all cursor-pointer ${
                     selectedChild?.id === child.id ? 'border-blue-600 ring-1 ring-blue-600' : 'border-slate-100'
                   }`}
                   onClick={() => handleSelectChild(child)}

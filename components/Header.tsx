@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Child, Language } from '../types';
-import { Sparkles, Globe } from 'lucide-react';
+import { Child, Language, User } from '../types';
+import { Sparkles, Globe, LogOut } from 'lucide-react';
+import { translations } from '../i18n';
 
 interface HeaderProps {
   children: Child[];
@@ -9,10 +10,13 @@ interface HeaderProps {
   onSelectChild: (child: Child) => void;
   currentLang: Language;
   onLangChange: (lang: Language) => void;
+  user: User | null;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ children, selectedChild, onSelectChild, currentLang, onLangChange }) => {
+const Header: React.FC<HeaderProps> = ({ children, selectedChild, onSelectChild, currentLang, onLangChange, user, onLogout }) => {
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const t = translations[currentLang];
 
   const languages: { code: Language; label: string }[] = [
     { code: 'en', label: 'English' },
@@ -31,13 +35,21 @@ const Header: React.FC<HeaderProps> = ({ children, selectedChild, onSelectChild,
           <h1 className="hidden sm:block text-xl font-bold text-slate-900 tracking-tight">ValueLog</h1>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <button
+            onClick={onLogout}
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+            title={t.logout}
+          >
+            <LogOut size={18} />
+          </button>
+
           <div className="relative">
             <button
               onClick={() => setShowLangMenu(!showLangMenu)}
               className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
             >
-              <Globe size={20} />
+              <Globe size={18} />
             </button>
             
             {showLangMenu && (
@@ -60,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ children, selectedChild, onSelectChild,
             )}
           </div>
 
-          <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar max-w-[120px] sm:max-w-none">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar max-w-[100px] sm:max-w-none">
             {children.map((child) => (
               <button
                 key={child.id}
@@ -72,7 +84,7 @@ const Header: React.FC<HeaderProps> = ({ children, selectedChild, onSelectChild,
                 <img
                   src={child.avatar}
                   alt={child.name}
-                  className={`w-10 h-10 rounded-full border-2 transition-colors ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-colors ${
                     selectedChild?.id === child.id ? 'border-blue-600' : 'border-transparent'
                   }`}
                 />

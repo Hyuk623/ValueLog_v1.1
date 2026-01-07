@@ -1,6 +1,11 @@
 
 export type Language = 'en' | 'ko' | 'ja' | 'es';
 
+export interface User {
+  id: string;
+  name: string;
+}
+
 export interface Child {
   id: string;
   name: string;
@@ -18,12 +23,14 @@ export interface STARR {
 export interface ExperienceEntry {
   id: string;
   childId: string;
+  userId: string;
   title: string;
   date: string;
   starr: STARR;
   activityTags: string[];
   competencyTags: string[];
   satisfaction: number;
+  image?: string; // Base64 string
 }
 
 export enum AppTab {

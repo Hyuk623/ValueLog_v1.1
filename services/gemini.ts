@@ -1,11 +1,11 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { STARR, Language } from "../types";
 
-const API_KEY = process.env.API_KEY || "";
+// Fix: Removed global API_KEY constant and use process.env.API_KEY directly in the GoogleGenAI constructor.
 
 export const refineToSTARR = async (rawNotes: string, lang: Language): Promise<STARR> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Fix: Initialize GoogleGenAI right before making an API call using named parameter with process.env.API_KEY.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const languageInstructions = {
     en: "Output all fields in English.",
@@ -38,7 +38,9 @@ export const refineToSTARR = async (rawNotes: string, lang: Language): Promise<S
   });
 
   try {
-    return JSON.parse(response.text);
+    // Fix: Access the .text property directly instead of calling it as a method.
+    const text = response.text;
+    return text ? JSON.parse(text) : { situation: "", task: "", action: "", result: "", reflection: "" };
   } catch (e) {
     console.error("Failed to parse AI response", e);
     return { situation: "", task: "", action: "", result: "", reflection: "" };
@@ -46,7 +48,8 @@ export const refineToSTARR = async (rawNotes: string, lang: Language): Promise<S
 };
 
 export const suggestTags = async (starr: STARR): Promise<{ activityTags: string[], competencyTags: string[] }> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Fix: Initialize GoogleGenAI right before making an API call using named parameter with process.env.API_KEY.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Analyze this experience and suggest appropriate tags from these categories (Use the exact English keys):
@@ -75,7 +78,9 @@ export const suggestTags = async (starr: STARR): Promise<{ activityTags: string[
   });
 
   try {
-    return JSON.parse(response.text);
+    // Fix: Access the .text property directly instead of calling it as a method.
+    const text = response.text;
+    return text ? JSON.parse(text) : { activityTags: [], competencyTags: [] };
   } catch (e) {
     return { activityTags: [], competencyTags: [] };
   }

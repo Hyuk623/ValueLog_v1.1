@@ -1,4 +1,3 @@
-
 import { Child, ExperienceEntry } from './types';
 
 export const ACTIVITY_TAGS = [
@@ -18,6 +17,8 @@ export const SAMPLE_EXPERIENCES: ExperienceEntry[] = [
   {
     id: 'e1',
     childId: '1',
+    // Fix: Added missing userId property required by the ExperienceEntry interface
+    userId: 'user1',
     title: 'School Science Fair',
     date: '2025-11-15',
     starr: {
@@ -34,6 +35,8 @@ export const SAMPLE_EXPERIENCES: ExperienceEntry[] = [
   {
     id: 'e2',
     childId: '1',
+    // Fix: Added missing userId property required by the ExperienceEntry interface
+    userId: 'user1',
     title: 'Local Art Exhibition',
     date: '2025-12-05',
     starr: {
