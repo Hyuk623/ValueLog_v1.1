@@ -6,7 +6,9 @@ const KEYS = {
   CHILDREN: 'valuelog_children',
   ENTRIES: 'valuelog_entries',
   SELECTED_CHILD_ID: 'valuelog_selected_child',
-  LANGUAGE: 'valuelog_language'
+  LANGUAGE: 'valuelog_language',
+  CUSTOM_ACTIVITY_TAGS: 'valuelog_custom_activity_tags',
+  CUSTOM_COMPETENCY_TAGS: 'valuelog_custom_competency_tags'
 };
 
 export const storage = {
@@ -35,5 +37,19 @@ export const storage = {
   },
   setLanguage: (lang: Language) => {
     localStorage.setItem(KEYS.LANGUAGE, lang);
+  },
+  getCustomActivityTags: (): string[] => {
+    const data = localStorage.getItem(KEYS.CUSTOM_ACTIVITY_TAGS);
+    return data ? JSON.parse(data) : [];
+  },
+  saveCustomActivityTags: (tags: string[]) => {
+    localStorage.setItem(KEYS.CUSTOM_ACTIVITY_TAGS, JSON.stringify(tags));
+  },
+  getCustomCompetencyTags: (): string[] => {
+    const data = localStorage.getItem(KEYS.CUSTOM_COMPETENCY_TAGS);
+    return data ? JSON.parse(data) : [];
+  },
+  saveCustomCompetencyTags: (tags: string[]) => {
+    localStorage.setItem(KEYS.CUSTOM_COMPETENCY_TAGS, JSON.stringify(tags));
   }
 };

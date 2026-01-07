@@ -4,7 +4,7 @@ import { AppTab, Child, ExperienceEntry, STARR, Language } from './types';
 import { storage } from './services/storage';
 import { ACTIVITY_TAGS, COMPETENCY_TAGS } from './constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Plus, Wand2, Star, Save, Loader2, UserPlus, Trash2 } from 'lucide-react';
+import { Plus, Wand2, Star, Save, Loader2, UserPlus, Trash2, CheckCircle2 } from 'lucide-react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ExperienceCard from './components/ExperienceCard';
@@ -18,6 +18,12 @@ const App: React.FC = () => {
   const [entries, setEntries] = useState<ExperienceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [lang, setLang] = useState<Language>('en');
+
+  // Custom Tags State
+  const [customActivityTags, setCustomActivityTags] = useState<string[]>([]);
+  const [customCompetencyTags, setCustomCompetencyTags] = useState<string[]>([]);
+  const [newActivityInput, setNewActivityInput] = useState('');
+  const [newCompInput, setNewCompInput] = useState('');
 
   // Form State
   const [formTitle, setFormTitle] = useState('');
@@ -36,9 +42,14 @@ const App: React.FC = () => {
     const loadedChildren = storage.getChildren();
     const loadedEntries = storage.getEntries();
     const savedLang = storage.getLanguage();
+    const loadedCustomAct = storage.getCustomActivityTags();
+    const loadedCustomComp = storage.getCustomCompetencyTags();
+
     setChildren(loadedChildren);
     setEntries(loadedEntries);
     setLang(savedLang);
+    setCustomActivityTags(loadedCustomAct);
+    setCustomCompetencyTags(loadedCustomComp);
 
     const lastChildId = storage.getSelectedChildId();
     if (lastChildId) {
@@ -65,6 +76,9 @@ const App: React.FC = () => {
       .filter(e => e.childId === selectedChild?.id)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [entries, selectedChild]);
+
+  const allActivityTags = useMemo(() => [...ACTIVITY_TAGS, ...customActivityTags], [customActivityTags]);
+  const allCompetencyTags = useMemo(() => [...COMPETENCY_TAGS, ...customCompetencyTags], [customCompetencyTags]);
 
   const dashboardData = useMemo(() => {
     const activityMap: Record<string, number> = {};
@@ -154,6 +168,28 @@ const App: React.FC = () => {
       const updated = entries.filter(e => e.id !== id);
       setEntries(updated);
       storage.saveEntries(updated);
+    }
+  };
+
+  const addCustomActivityTag = () => {
+    const trimmed = newActivityInput.trim();
+    if (trimmed && !allActivityTags.includes(trimmed)) {
+      const updated = [...customActivityTags, trimmed];
+      setCustomActivityTags(updated);
+      storage.saveCustomActivityTags(updated);
+      setFormActivityTags(prev => [...prev, trimmed]);
+      setNewActivityInput('');
+    }
+  };
+
+  const addCustomCompTag = () => {
+    const trimmed = newCompInput.trim();
+    if (trimmed && !allCompetencyTags.includes(trimmed)) {
+      const updated = [...customCompetencyTags, trimmed];
+      setCustomCompetencyTags(updated);
+      storage.saveCustomCompetencyTags(updated);
+      setFormCompetencyTags(prev => [...prev, trimmed]);
+      setNewCompInput('');
     }
   };
 
@@ -337,7 +373,8 @@ const App: React.FC = () => {
                         value={(formSTARR as any)[key]}
                         onChange={e => setFormSTARR({ ...formSTARR, [key]: e.target.value })}
                         rows={2}
-                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none text-sm"
+                        placeholder={(t.starr_placeholders as any)[key]}
+                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none text-sm placeholder:text-slate-300"
                       />
                     </div>
                   ))}
@@ -347,7 +384,7 @@ const App: React.FC = () => {
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{t.activity_tags}</label>
                     <div className="flex flex-wrap gap-2">
-                      {ACTIVITY_TAGS.map(tag => (
+                      {allActivityTags.map(tag => (
                         <button
                           key={tag}
                           onClick={() => setFormActivityTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
@@ -360,13 +397,27 @@ const App: React.FC = () => {
                           {getTagLabel(tag)}
                         </button>
                       ))}
+                      {/* Add Custom Activity Tag Input */}
+                      <div className="flex items-center bg-slate-50 border border-dashed border-slate-300 rounded-full px-2 py-0.5">
+                        <input
+                          type="text"
+                          value={newActivityInput}
+                          onChange={e => setNewActivityInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && addCustomActivityTag()}
+                          placeholder={t.tag_placeholder}
+                          className="bg-transparent border-none outline-none text-[10px] w-16 px-1"
+                        />
+                        <button onClick={addCustomActivityTag} className="text-blue-500 p-0.5 hover:bg-blue-50 rounded-full transition-colors">
+                          <Plus size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{t.comp_tags}</label>
                     <div className="flex flex-wrap gap-2">
-                      {COMPETENCY_TAGS.map(tag => (
+                      {allCompetencyTags.map(tag => (
                         <button
                           key={tag}
                           onClick={() => setFormCompetencyTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
@@ -379,6 +430,20 @@ const App: React.FC = () => {
                           {getTagLabel(tag)}
                         </button>
                       ))}
+                      {/* Add Custom Competency Tag Input */}
+                      <div className="flex items-center bg-slate-50 border border-dashed border-slate-300 rounded-full px-2 py-0.5">
+                        <input
+                          type="text"
+                          value={newCompInput}
+                          onChange={e => setNewCompInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && addCustomCompTag()}
+                          placeholder={t.tag_placeholder}
+                          className="bg-transparent border-none outline-none text-[10px] w-16 px-1"
+                        />
+                        <button onClick={addCustomCompTag} className="text-indigo-500 p-0.5 hover:bg-indigo-50 rounded-full transition-colors">
+                          <Plus size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -27,6 +27,8 @@ export const translations = {
     starr_framework: "STARR Framework Details",
     activity_tags: "Activity Tags",
     comp_tags: "Competency Tags",
+    add_custom_tag: "Add Tag",
+    tag_placeholder: "New Tag...",
     save_record: "Save Experience Record",
     family_members: "Family Members",
     add_child: "Add Child",
@@ -39,6 +41,13 @@ export const translations = {
     records: "Records",
     exp_timeline: "Experience Timeline",
     empty_timeline: "Your timeline is empty. Record an experience to build your portfolio!",
+    starr_placeholders: {
+      situation: "Where and when? (e.g., At the community garden last Saturday...)",
+      task: "What was your specific goal? (e.g., I needed to plant 20 saplings...)",
+      action: "What steps did you take? (e.g., I organized the tools and led a small team...)",
+      result: "What happened? (e.g., All trees were planted and the park looks great...)",
+      reflection: "What did you learn? (e.g., I learned that leading a team requires clear communication...)"
+    },
     tags: {
       Art: "Art", Science: "Science", Sports: "Sports", Volunteering: "Volunteering", 
       Career: "Career", Coding: "Coding", Music: "Music", Leadership: "Leadership", 
@@ -72,6 +81,8 @@ export const translations = {
     starr_framework: "STARR 프레임워크 상세",
     activity_tags: "활동 태그",
     comp_tags: "역량 태그",
+    add_custom_tag: "태그 추가",
+    tag_placeholder: "새 태그...",
     save_record: "경험 기록 저장",
     family_members: "가족 구성원",
     add_child: "자녀 추가",
@@ -84,6 +95,13 @@ export const translations = {
     records: "개의 기록",
     exp_timeline: "경험 타임라인",
     empty_timeline: "타임라인이 비어 있습니다. 경험을 기록하고 포트폴리오를 쌓아보세요!",
+    starr_placeholders: {
+      situation: "언제 어디서 일어난 일인가요? (예: 지난 토요일 동네 정원에서...)",
+      task: "구체적인 목표나 해결해야 할 과제는 무엇이었나요? (예: 20그루의 나무를 심어야 했습니다...)",
+      action: "어떤 행동을 했나요? (예: 도구를 챙기고 친구들과 역할을 나누어 작업을 시작했습니다...)",
+      result: "결과는 어떠했나요? (예: 모든 나무를 성공적으로 심었고 시장님께 칭찬을 받았습니다...)",
+      reflection: "무엇을 배웠나요? (예: 협동의 소중함과 책임감을 배울 수 있었습니다...)"
+    },
     tags: {
       Art: "예술", Science: "과학", Sports: "스포츠", Volunteering: "봉사", 
       Career: "진로", Coding: "코딩", Music: "음악", Leadership: "리더십", 
@@ -117,6 +135,8 @@ export const translations = {
     starr_framework: "STARRフレームワーク詳細",
     activity_tags: "活動タグ",
     comp_tags: "能力タグ",
+    add_custom_tag: "タグ追加",
+    tag_placeholder: "新しいタグ...",
     save_record: "経験を保存する",
     family_members: "家族メンバー",
     add_child: "お子様を追加",
@@ -124,11 +144,18 @@ export const translations = {
     pro_tip: "ヒント 💡",
     pro_tip_desc: "経験した直後にメモしましょう！AIが後で専門的なポートフォリオ形式に整えてくれます。",
     copy_portfolio: "ポートフォリオをコピー",
-    copied: "クリップボードにコピーされました",
+    copied: "클립보드에 복사됨",
     delete_confirm: "この記録を削除しますか？",
     records: "件の記録",
     exp_timeline: "経験タイムライン",
     empty_timeline: "タイムラインが空です。経験を記録してポートフォリオを作りましょう！",
+    starr_placeholders: {
+      situation: "いつ、どこで？ (例：先週の土曜日に地域のボランティアで...)",
+      task: "具体的な目標は何でしたか？ (例：20本の苗木を植える必要がありました...)",
+      action: "どのような行動をしましたか？ (例：道具を準備し、チームで役割を分担しました...)",
+      result: "結果はどうなりましたか？ (例：すべての苗木を植え終え、達成感を感じました...)",
+      reflection: "何を学びましたか？ (例：計画的に進めることの重要性を学びました...)"
+    },
     tags: {
       Art: "芸術", Science: "科学", Sports: "スポーツ", Volunteering: "ボランティア", 
       Career: "キャリア", Coding: "コーディング", Music: "音楽", Leadership: "リーダーシップ", 
@@ -162,6 +189,8 @@ export const translations = {
     starr_framework: "Detalles del marco STARR",
     activity_tags: "Etiquetas de actividad",
     comp_tags: "Etiquetas de competencia",
+    add_custom_tag: "Añadir etiqueta",
+    tag_placeholder: "Nueva etiqueta...",
     save_record: "Guardar registro",
     family_members: "Miembros de la familia",
     add_child: "Añadir hijo/a",
@@ -174,6 +203,13 @@ export const translations = {
     records: "Registros",
     exp_timeline: "Línea de tiempo de experiencias",
     empty_timeline: "Tu línea de tiempo está vacía. ¡Registra una experiencia!",
+    starr_placeholders: {
+      situation: "¿Cuándo y dónde? (ej. En el jardín comunitario el sábado pasado...)",
+      task: "¿Cuál era tu objetivo específico? (ej. Tenía que plantar 20 árboles...)",
+      action: "¿Qué pasos seguiste? (ej. Organicé las herramientas y dirigí a un equipo...)",
+      result: "¿Cuál fue el resultado? (ej. Se plantaron todos los árboles con éxito...)",
+      reflection: "¿Qué aprendiste? (ej. Aprendí que la comunicación es clave para el liderazgo...)"
+    },
     tags: {
       Art: "Arte", Science: "Ciencia", Sports: "Deportes", Volunteering: "Voluntariado", 
       Career: "Carrera", Coding: "Programación", Music: "Música", Leadership: "Liderazgo", 
